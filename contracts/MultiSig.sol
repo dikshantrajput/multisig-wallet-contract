@@ -104,7 +104,16 @@ contract MultiSig{
         require(balance >= transaction.value,"Not enough balance");
         balance -= transaction.value;
         transaction.isExecuted = true;
-        payable(transaction.to).transfer(transaction.value);
+        //if data withdraw, ditsibute value among equally
+        if(keccak256(abi.encodePacked(transaction.data)) == keccak256(abi.encodePacked("withdraw"))){
+            uint256 amountToTransfer = transaction.value / rawOwners.length;
+            for(uint256 i=0;i<rawOwners.length;i++){
+                payable(rawOwners[i]).transfer(amountToTransfer);
+                emit Withdraw(msg.sender,amountToTransfer,block.timestamp);
+            }
+        }else{
+            payable(transaction.to).transfer(transaction.value);
+        }
         emit ExecuteTransaction(_txId);
     }
 
